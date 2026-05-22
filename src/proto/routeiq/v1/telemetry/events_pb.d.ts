@@ -153,6 +153,11 @@ export declare type AgentEvent = Message<"routeiq.v1.telemetry.AgentEvent"> & {
   riskTier: RiskTier;
 
   /**
+   * @generated from field: string session_id = 17;
+   */
+  sessionId: string;
+
+  /**
    * @generated from oneof routeiq.v1.telemetry.AgentEvent.payload
    */
   payload: {
