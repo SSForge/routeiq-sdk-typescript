@@ -4,7 +4,6 @@ import { OTLPTraceExporter as GrpcExporter } from "@opentelemetry/exporter-trace
 import { OTLPTraceExporter as HttpExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { Resource } from "@opentelemetry/resources";
 import * as crypto from "crypto";
-import * as grpc from "@grpc/grpc-js";
 import { TaskHandle, StepHandle } from "./handles.js";
 
 const SDK_VERSION = "0.2.0";
@@ -77,15 +76,14 @@ export class RouteIQ {
 }
 
 function makeExporter(endpoint: string, apiKey?: string): SpanExporter {
+  const headers: Record<string, string> = {};
+  if (apiKey) headers["authorization"] = `Bearer ${apiKey}`;
+
   if (endpoint.startsWith("https://") || endpoint.includes(":4318")) {
-    const headers: Record<string, string> = {};
-    if (apiKey) headers["authorization"] = `Bearer ${apiKey}`;
     return new HttpExporter({
       url: `${endpoint.replace(/\/$/, "")}/v1/traces`,
       headers,
     });
   }
-  const metadata = new grpc.Metadata();
-  if (apiKey) metadata.add("authorization", `Bearer ${apiKey}`);
-  return new GrpcExporter({ url: endpoint, metadata });
+  return new GrpcExporter({ url: endpoint, headers });
 }
