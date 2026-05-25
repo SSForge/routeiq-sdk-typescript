@@ -1,0 +1,74 @@
+import { BasicTracerProvider, BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
+import { OTLPTraceExporter as GrpcExporter } from "@opentelemetry/exporter-trace-otlp-grpc";
+import { OTLPTraceExporter as HttpExporter } from "@opentelemetry/exporter-trace-otlp-http";
+import { Resource } from "@opentelemetry/resources";
+import * as crypto from "crypto";
+import * as grpc from "@grpc/grpc-js";
+import { TaskHandle } from "./handles.js";
+const SDK_VERSION = "0.2.0";
+export class RouteIQ {
+    agentId;
+    tenantId;
+    model;
+    environment;
+    agentVersion;
+    sessionId;
+    _tracer;
+    _provider;
+    constructor(opts) {
+        this.agentId = opts.agentId;
+        this.tenantId = opts.tenantId ?? "default";
+        this.model = opts.model;
+        this.environment = opts.environment ?? "production";
+        this.agentVersion = opts.agentVersion ?? "1.0.0";
+        this.sessionId = crypto.randomUUID();
+        const resource = new Resource({
+            "service.name": this.agentId,
+            "service.version": this.agentVersion,
+            "routeiq.sdk.version": SDK_VERSION,
+        });
+        this._provider = new BasicTracerProvider({ resource });
+        this._provider.addSpanProcessor(new BatchSpanProcessor(makeExporter(opts.otlpEndpoint ?? "http://localhost:4317", opts.apiKey)));
+        this._tracer = this._provider.getTracer("routeiq.sdk", SDK_VERSION);
+    }
+    task(intent, taskType) {
+        return new TaskHandle(this, intent, taskType);
+    }
+    async flush() {
+        await this._provider.forceFlush();
+    }
+    _envelope(task, step) {
+        const attrs = {
+            "routeiq.agent.id": this.agentId,
+            "routeiq.tenant.id": this.tenantId,
+            "routeiq.environment": this.environment,
+            "routeiq.session.id": this.sessionId,
+        };
+        if (task) {
+            attrs["routeiq.task.id"] = task.taskId;
+            attrs["routeiq.run.id"] = task.runId;
+        }
+        if (step)
+            attrs["routeiq.step.id"] = step.stepId;
+        if (this.model)
+            attrs["routeiq.version.model.name"] = this.model;
+        if (this.agentVersion)
+            attrs["routeiq.version.agent"] = this.agentVersion;
+        return attrs;
+    }
+}
+function makeExporter(endpoint, apiKey) {
+    if (endpoint.startsWith("https://") || endpoint.includes(":4318")) {
+        const headers = {};
+        if (apiKey)
+            headers["authorization"] = `Bearer ${apiKey}`;
+        return new HttpExporter({
+            url: `${endpoint.replace(/\/$/, "")}/v1/traces`,
+            headers,
+        });
+    }
+    const metadata = new grpc.Metadata();
+    if (apiKey)
+        metadata.add("authorization", `Bearer ${apiKey}`);
+    return new GrpcExporter({ url: endpoint, metadata });
+}

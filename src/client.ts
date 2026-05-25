@@ -1,10 +1,10 @@
 import { trace, type Tracer } from "@opentelemetry/api";
-import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
-import { BatchSpanProcessor, type SpanExporter } from "@opentelemetry/sdk-trace-base";
+import { BasicTracerProvider, BatchSpanProcessor, type SpanExporter } from "@opentelemetry/sdk-trace-base";
 import { OTLPTraceExporter as GrpcExporter } from "@opentelemetry/exporter-trace-otlp-grpc";
 import { OTLPTraceExporter as HttpExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { Resource } from "@opentelemetry/resources";
 import * as crypto from "crypto";
+import * as grpc from "@grpc/grpc-js";
 import { TaskHandle, StepHandle } from "./handles.js";
 
 const SDK_VERSION = "0.2.0";
@@ -27,7 +27,7 @@ export class RouteIQ {
   readonly agentVersion: string;
   readonly sessionId: string;
   readonly _tracer: Tracer;
-  private readonly _provider: NodeTracerProvider;
+  private readonly _provider: BasicTracerProvider;
 
   constructor(opts: RouteIQOptions) {
     this.agentId = opts.agentId;
@@ -43,7 +43,7 @@ export class RouteIQ {
       "routeiq.sdk.version": SDK_VERSION,
     });
 
-    this._provider = new NodeTracerProvider({ resource });
+    this._provider = new BasicTracerProvider({ resource });
     this._provider.addSpanProcessor(
       new BatchSpanProcessor(makeExporter(opts.otlpEndpoint ?? "http://localhost:4317", opts.apiKey)),
     );
@@ -77,14 +77,15 @@ export class RouteIQ {
 }
 
 function makeExporter(endpoint: string, apiKey?: string): SpanExporter {
-  const headers: Record<string, string> = {};
-  if (apiKey) headers["authorization"] = `Bearer ${apiKey}`;
-
   if (endpoint.startsWith("https://") || endpoint.includes(":4318")) {
+    const headers: Record<string, string> = {};
+    if (apiKey) headers["authorization"] = `Bearer ${apiKey}`;
     return new HttpExporter({
       url: `${endpoint.replace(/\/$/, "")}/v1/traces`,
       headers,
     });
   }
-  return new GrpcExporter({ url: endpoint, headers });
+  const metadata = new grpc.Metadata();
+  if (apiKey) metadata.add("authorization", `Bearer ${apiKey}`);
+  return new GrpcExporter({ url: endpoint, metadata });
 }
