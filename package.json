@@ -5,9 +5,10 @@
     "url": "https://github.com/SSForge/routeiq-sdk-typescript"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "registry": "https://npm.pkg.github.com",
+    "access": "public"
   },
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "RouteIQ SDK for Node.js — instrument AI agents with task/step/tool spans",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
