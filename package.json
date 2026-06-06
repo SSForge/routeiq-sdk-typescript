@@ -1,5 +1,9 @@
 {
   "name": "@ssforge/routeiq-sdk",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SSForge/routeiq-sdk-typescript"
+  },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },
