@@ -1,5 +1,8 @@
 {
-  "name": "routeiq-sdk",
+  "name": "@ssforge/routeiq-sdk",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "version": "0.3.0",
   "description": "RouteIQ SDK for Node.js — instrument AI agents with task/step/tool spans",
   "main": "dist/index.js",
