@@ -7,7 +7,7 @@
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "RouteIQ SDK for Node.js — instrument AI agents with task/step/tool spans",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
