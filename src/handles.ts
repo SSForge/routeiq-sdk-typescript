@@ -70,11 +70,14 @@ export class ToolHandle implements Disposable {
     if (opts.tokensIn   != null)     attrs["routeiq.tool.tokens_in"]   = opts.tokensIn;
     if (opts.tokensOut  != null)     attrs["routeiq.tool.tokens_out"]  = opts.tokensOut;
     this._span.setAttributes(attrs);
+    this._span.end();
+    this._span = null;
   }
 
   [Symbol.dispose](): void {
     if (!this._done) this.success();
     this._span?.end();
+    this._span = null;
   }
 }
 
@@ -152,11 +155,14 @@ export class StepHandle implements Disposable {
     if (opts.tokensIn  != null)  attrs["routeiq.step.tokens_in"]        = opts.tokensIn;
     if (opts.tokensOut != null)  attrs["routeiq.step.tokens_out"]       = opts.tokensOut;
     this._span.setAttributes(attrs);
+    this._span.end();
+    this._span = null;
   }
 
   [Symbol.dispose](): void {
     if (!this._done) this.complete();
     this._span?.end();
+    this._span = null;
   }
 }
 
@@ -251,10 +257,13 @@ export class TaskHandle implements Disposable {
     const sameToolCount = this._maxSameToolCount();
     if (sameToolCount > 1) attrs["routeiq.same_tool_count"] = sameToolCount;
     this._span.setAttributes(attrs);
+    this._span.end();
+    this._span = null;
   }
 
   [Symbol.dispose](): void {
     if (!this._done) this.complete();
     this._span?.end();
+    this._span = null;
   }
 }

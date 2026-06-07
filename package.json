@@ -8,7 +8,7 @@
     "registry": "https://npm.pkg.github.com",
     "access": "public"
   },
-  "version": "0.3.5",
+  "version": "0.3.6",
   "description": "RouteIQ SDK for Node.js — instrument AI agents with task/step/tool spans",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
